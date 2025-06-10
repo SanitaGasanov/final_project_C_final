@@ -1,0 +1,127 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+
+//////////////
+#define WHITE 0
+#define GRAY 1
+#define BLACK 2
+
+/////////////////////////////////////////////////////////////////////
+//////////////////////////for part #4///////////////////////////////
+///////////////////////////////////////////////////////////////////
+typedef struct {
+	int neighbor;
+	int cost;
+} Edge;
+
+typedef struct edge_node {
+	Edge e;
+	struct edge_node* next;
+} EdgeNode;
+
+typedef struct {
+	EdgeNode* head;
+	EdgeNode* tail;
+} EdgeList;
+
+/////////////////////////////////////////////////////////////////////////////////////
+void find_and_print_path(EdgeList* PrimPath, int n, int first, int last);
+int* createColorArray(int n);    //set color and perent arrs
+int* createParentArray(int n);
+void FindPath(int first, int last, EdgeList* PrimPath, int* color, int* parent);       //rec function for update parent arr
+void PrintPath(int v, int first, int* parent);                                        //function to print prerent arr
+void FreeMeomeryFuncD(EdgeList* PrimPath, int n, int* color, int* parent);     //function to free meomery
+
+////////////////////////////////////////////////////////////////////////////////////////
+void find_and_print_path(EdgeList* PrimPath, int n, int first, int last)
+{
+	int* color = createColorArray(n);
+	int* parent = createParentArray(n);
+
+	FindPath(first, last, PrimPath, color, parent);
+	PrintPath(last, first, parent);
+	FreeMeomeryFuncD(PrimPath,n, color, parent);
+}
+////////////////////////////////////////////////////////////////////
+int* createColorArray(int n)
+{
+	int* color = (int*)malloc(n * sizeof(int));
+	checkAllocation(color);
+
+	for (int i = 0; i < n; i++)
+		color[i] = WHITE;
+
+	return color;
+}
+////////////////////////////////////////////////////////////////////
+int* createParentArray(int n)
+{
+	int* parent = (int*)malloc(n * sizeof(int));
+	checkAllocation(parent);
+
+	for (int i = 0; i < n; i++)
+		parent[i] = -1;
+
+	return parent;
+}
+////////////////////////////////////////////////////////////////////
+void FindPath(int first, int last, EdgeList* PrimPath, int* color, int* parent)
+{
+	color[first] = GRAY; //put status GRAY
+
+	EdgeList currentList = PrimPath[first];
+	EdgeNode* currentNode = currentList.head;
+
+	for (; currentNode != NULL; currentNode = currentNode->next)
+	{
+		int v = currentNode->e.neighbor; //get the computer
+
+		if (color[v] == WHITE) //if its still white
+		{
+			parent[v] = first;
+			if (v == last)
+				return;
+			else
+				FindPath(v, last, PrimPath, color, parent); //rec call
+		}
+	}
+	color[first] = BLACK; //finish and put status BLACK
+}
+////////////////////////////////////////////////////////////////////////////////////////////
+void PrintPath(int v, int first, int* parent)
+{
+	if (v == first)
+	{
+		printf("%d ", v);
+	}
+	else
+	{
+		PrintPath(parent[v], first, parent);
+		printf("%d ", v);
+	}
+
+}
+///////////////////////////////////////////////////////////////////////////////////////////
+void FreeMeomeryFuncD(EdgeList* PrimPath, int n, int* color, int* parent)
+{
+	free(color);
+	free(parent);
+	FreeNetArray(PrimPath, n);
+}
+//////////////////////////////////////////////////////////////////////////////////////
+void FreeNetArray(EdgeList* net, int n)
+{
+	for (int i = 0; i < n; i++)  // run on all computers
+	{
+		EdgeNode* current = net[i].head; //get the list of curr comp
+		while (current)
+		{
+			EdgeNode* temp = current;
+			current = current->next;
+			free(temp);
+		}
+	}
+	free(net); //free the array
+}
+////////////////////////////////////////////////////////////////////////
