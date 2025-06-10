@@ -1,0 +1,395 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>// for InT arr
+#include <limits.h>//////////////////////////////////////////////////addition fom while///////////////
+
+typedef unsigned char BYTE;
+
+/////////////////////////////////////////////////////////////////////
+//////////////////////////for part #1///////////////////////////////
+///////////////////////////////////////////////////////////////////
+typedef struct {
+	int neighbor;
+	int cost;
+} Edge;
+
+typedef struct edge_node {
+	Edge e;
+	struct edge_node* next;
+} EdgeNode;
+
+typedef struct {
+	EdgeNode* head;
+	EdgeNode* tail;
+} EdgeList;
+
+/////////////////////////////////////////////////////////////////////
+//////////////////////////to part #2////////////////////////////////
+///////////////////////////////////////////////////////////////////
+typedef struct {
+	int computer;
+	int min;
+} Candidate;
+
+typedef struct candidate_node {
+	Candidate c;
+	struct candidate_node* next;
+	struct candidate_node* prev;
+} CandidateNode;
+
+typedef struct {
+	CandidateNode* head;
+	CandidateNode* tail;
+} CandidateList;
+
+/////////////////////////////////////////////////////////////////////////
+///////////////////////function signatures///////////////////////////////
+////////////////////////////////////////////////////////////////////////
+
+int* build_prim_tree(EdgeList net[], int n);   // main function to part #2
+///////functions to build arrs
+int* CreateMinArr(int num_of_computers);   // min arr   (difault value - INT_MAX)
+int* CreatePrimArr(int num_of_computers); // prim arr   (difault value - INT_MAX)
+///////functions that work with bits
+BYTE* CreateInTArr(int num_of_computers); // InT arr     (difault value - INT_MAX)    
+void SetBitInInTArr(BYTE* bits_arr, int v);
+bool CheckBitInInTArr(BYTE* bits_arr, int v);
+///////functions to build priority list
+CandidateNode* CreateNode(int computer, int min); //craete node for priority list
+CandidateList* CreateEmptyList();    //craete empty priority list with dummy head and tail
+CandidateList* CreatePrioriryList(int num_of_computers); //craete priority list
+///////functions to build location arr
+CandidateNode** CreateLocationArr(CandidateList* priority_list, int num_of_computers); //function to build location arr (of computer in priority)
+//////functions to Decrease min in priority
+void DecreaseKey(CandidateNode** location_arr, int v, int new_min);
+//////functions to delete node with min cost from priority and return this computer
+int DeleteMin(CandidateList* priority);
+//////chacking the cost
+int cost(EdgeList Net[], int u, int v);
+////// free memory
+void FreeMeomery(CandidateList* priority_list, int* min_arr, BYTE* InT_arr, CandidateNode** location_arr);
+void FreeNetArray(EdgeList* net, int n);
+void checkAllocation(void* arr);
+
+////////////////////////////////////////////////////////////////////////
+/////////////////////main function of #2////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+
+int* build_prim_tree(EdgeList net[], int n)
+{
+	int* prim_arr;
+	int* min_arr;
+	CandidateList* priority_list;
+	CandidateNode** location_arr;
+	BYTE* InT_arr;
+	int u;
+
+	prim_arr = CreatePrimArr(n);   //we set and create in arrs the default parameters
+	min_arr = CreateMinArr(n);
+	////////////
+	priority_list = CreatePrioriryList(n);             //we build priority list and according that we create the location arr
+	location_arr = CreateLocationArr(priority_list, n);
+	/////////////
+	InT_arr = CreateInTArr(n);          //we set and create in InT arr false
+	////////////////
+	int v0 = 0;   //we set according the settings that v0=0.
+	//////////////
+	*(min_arr + v0) = 0;
+	*(prim_arr + v0) = -1;
+	//////////////
+	while (priority_list->head->next != priority_list->tail)   //when priority list is not empty- head and tail are dummy nodes
+	{
+		u = DeleteMin(priority_list);         //is it correct? //we always recieve 0 in begining couse all min in priority are int_max
+		if (*(min_arr + u) == INT_MAX)
+		{
+			FreeMeomery(priority_list, min_arr, InT_arr, location_arr);
+			FreeNetArray(net, n);
+			free(prim_arr);
+
+			printf("No spanning tree available.");
+			exit(1);
+		}
+		else
+		{
+			SetBitInInTArr(InT_arr, u);   //turn on the bit
+		}
+		int price_of_link;                //parameter for price
+		bool if_bit_on;                  //parameter for bit
+		for (int v = 0; v < n; v++)     // v is computer 
+		{
+			price_of_link = cost(net, u, v);
+			if_bit_on = CheckBitInInTArr(InT_arr, v);
+
+			if ((!if_bit_on) && (price_of_link < (*(min_arr + v))))  // if v not in prim and price link<min v
+			{
+				*(min_arr + v) = price_of_link;
+				*(prim_arr + v) = u;
+				DecreaseKey(location_arr, v, price_of_link);
+			}
+		}
+	}
+	FreeMeomery(priority_list, min_arr, InT_arr, location_arr);
+	FreeNetArray(net, n);
+	return prim_arr;
+}
+//////////////////////////////////////////////////////////////////////                    
+////////////////////////create min arr////////////////////////////////
+int* CreateMinArr(int num_of_computers)                   //arr num 2
+{
+	int i = 0;  //counter
+	int* min_arr;
+
+	min_arr = (int*)malloc(sizeof(int) * num_of_computers);
+	checkAllocation(min_arr);
+
+		while (i < num_of_computers)
+		{
+			*(min_arr + i) = INT_MAX;   //It's a default parameter
+			i++;
+		}
+	return min_arr;
+}
+//////////////////////////////////////////////////////////////////////                    
+////////////////////////create min arr////////////////////////////////
+int* CreatePrimArr(int num_of_computers)                   //  arr ezer for prim
+{
+	int i = 0;  //counter
+	int* prim_arr;
+
+	prim_arr = (int*)malloc(sizeof(int) * num_of_computers);
+	checkAllocation(prim_arr);
+
+	while (i < num_of_computers)
+	{
+		*(prim_arr + i) = (-1);   //It's a default parameter
+		i++;
+	}
+
+	return prim_arr;
+}
+//////////////////////////////////////////////////////////////////////                     
+////////////////////////create InT arr////////////////////////////////
+BYTE* CreateInTArr(int num_of_computers)
+{
+	BYTE* bits_arr_result;
+	int bytes_of_arr;   /// how many bytes in arr
+
+	if (num_of_computers % 8 == 0)   //calculate the bytes
+	{
+		bytes_of_arr = num_of_computers / 8;
+	}
+	else
+	{
+		bytes_of_arr = (num_of_computers / 8) + 1;
+	}
+
+	bits_arr_result = (BYTE*)calloc(bytes_of_arr, sizeof(BYTE));   //set meomery
+	checkAllocation(bits_arr_result);
+
+	return bits_arr_result;
+}
+//////////////////////////////////////////////////////////////////////                  
+////////////////////turn on bit in Int arr////////////////////////////
+void SetBitInInTArr(BYTE* bits_arr, int v)
+{
+	int my_byte = v / 8;     //which byte   
+	int my_bit = v % 8;     //which bit
+	unsigned char mask = 1;// its like 00000001 -  in byte we have 8 bits
+	mask = mask << my_bit;// change num 1 acoording my bit
+
+	*(bits_arr + my_byte) = *(bits_arr + my_byte) | mask;  //change bit to 1 
+}
+///////////////////////////////////////////////////////////////////////                                     
+////////////////////////if bit if 1 or false //////////////////////////
+bool CheckBitInInTArr(BYTE* bits_arr, int v)
+{
+	int my_byte = v / 8;     //which byte   
+	int my_bit = v % 8;     //which bit
+	unsigned char mask = 1;// its like 00000001 -  in byte we have 8 bits
+	mask = mask << my_bit;// change num 1 acoording my bit
+
+	return (bits_arr[my_byte] & mask) != 0;  //chacking with the mask if 1 or 0- if 0 false if 1 true
+}
+
+//////////////////////////////////////////////////////////////////////                    
+///////////////////////////create new node////////////////////////////
+CandidateNode* CreateNode(int computer, int min)
+{
+	CandidateNode* new_node;
+	new_node = (CandidateNode*)malloc(sizeof(CandidateNode) * 1);
+	checkAllocation(new_node);
+
+	new_node->c.computer = computer;
+	new_node->c.min = min;
+	new_node->next = NULL;
+	new_node->prev = NULL;
+
+	return new_node;
+}
+//////////////////////////////////////////////////////////////////////                     need to free                     
+////////////////////////make empty list///////////////////////////////
+CandidateList* CreateEmptyList()
+{
+	CandidateList* my_list;
+
+	my_list = (CandidateList*)malloc(sizeof(CandidateList) * 1);
+	checkAllocation(my_list);
+
+	my_list->head = CreateNode(-2, -2); // set values for dummy nodes (-2 cant be num of computer or cost)  
+	my_list->tail = CreateNode(-2, -2); //carete the empty priority list
+	my_list->head->next = my_list->tail;
+	my_list->tail->prev = my_list->head;
+
+	return my_list;
+
+}
+//////////////////////////////////////////////////////////////////////                   
+////////////////////////create priority list//////////////////////////
+CandidateList* CreatePrioriryList(int num_of_computers)
+{
+	CandidateList* my_list;
+	my_list = CreateEmptyList();
+
+	CandidateNode* prev_node = my_list->head;
+	CandidateNode* new_node;
+	int i = 0;
+
+	while (i < num_of_computers)
+	{
+
+		new_node = CreateNode(i, INT_MAX);
+		prev_node->next = new_node;
+		new_node->prev = prev_node;
+		prev_node = new_node;
+		i++;
+	}
+	prev_node->next = my_list->tail;             /////////importent//////////////
+	my_list->tail->prev = prev_node;
+
+	return my_list;
+}
+//////////////////////////////////////////////////////////////////////                                     
+////////////////////////build location arr///////////////////////////
+CandidateNode** CreateLocationArr(CandidateList* priority_list, int num_of_computers)
+{
+	CandidateNode** location_arr;
+	CandidateNode* new_pointer = priority_list->head->next;  //because head is dummy node
+	int i = 0;
+
+	location_arr = (CandidateNode**)malloc(sizeof(CandidateNode*) * num_of_computers);
+	checkAllocation(location_arr);
+
+	while (i < num_of_computers)              //num_of_computers = lenght of priority list. so ew didnt do double check
+	{
+		*(location_arr + i) = new_pointer;
+		new_pointer = new_pointer->next;
+		i++;
+	}
+
+return location_arr;
+}
+//////////////////////////////////////////////////////////////////////                                      
+////////////////////////Decrease min in min arr///////////////////////
+void DecreaseKey(CandidateNode** location_arr, int v, int new_min)
+{
+	CandidateNode* my_pointer = *(location_arr + v);    // get relevant address of computer in priority list
+	my_pointer->c.min = new_min;                       //change to new min cost
+}
+//////////////////////////////////////////////////////////////////////                                     
+/////////Delete node with min cost from list+return computer ////////         /// i need to chack this is before the change
+int DeleteMin(CandidateList* priority)
+{
+	CandidateNode* currnt_node = priority->head->next;    //secound node in list because head is dummy
+	CandidateNode* node_to_delete = priority->head->next;
+
+	CandidateNode* prev_node = priority->head;          // prev and next nodes to chang list
+	CandidateNode* next_node = currnt_node->next;
+
+	int v = currnt_node->c.computer;                      // computer of min cost to begining
+	int min_cost = currnt_node->c.min;                  // min cost of first current node to begining
+
+	while (currnt_node != priority->tail)       // until one node before tail because tail is dummy
+	{
+
+		if ((currnt_node->c.min < min_cost) && (currnt_node->c.min != INT_MAX))   // if min in current node is the min until now in list
+		{
+			min_cost = currnt_node->c.min;   //update node to delete, v, and min cost
+			v = currnt_node->c.computer;
+			node_to_delete = currnt_node;
+		}
+		currnt_node = currnt_node->next;
+	}
+
+	prev_node = node_to_delete->prev;      //after we get node to delete- set prev and next nodes
+	next_node = node_to_delete->next;
+
+	prev_node->next = next_node;         // link prev and next nodes - delete from priority
+	next_node->prev = prev_node;
+
+	free(node_to_delete);            //free node address from meomery 
+
+	return v;
+}
+///////////////////////////////////////////////////////////////////////                                     
+/////////////////return the cost between conputers ///////////////////
+int cost(EdgeList Net[], int u, int v)
+{
+	EdgeNode* current = Net[u].head;
+	while (current != NULL)
+	{
+		if (current->e.neighbor == v)
+			return current->e.cost; //return the price
+
+		current = current->next;
+	}
+	return INT_MAX; //if there is no connection 
+}
+///////////////////////////////////////////////////////////////////////                                     
+/////////////////////////free all meomery ////////////////////////////
+void FreeMeomery(CandidateList* priority_list, int* min_arr, BYTE* InT_arr, CandidateNode** location_arr)
+{
+
+	CandidateNode* current_node = priority_list->head->next;
+	CandidateNode* to_delete_node;
+
+	while (current_node != priority_list->tail) // if we in condition in the while loop in the main
+	{
+		to_delete_node = current_node;
+		current_node = current_node->next;
+		free(to_delete_node);
+	}
+
+	free(priority_list->head);   //its the dummy nodes of list
+	free(priority_list->tail);  //we end the loos and its mean that we have only dummy head and tail	 
+	free(priority_list);       //free meomery of list
+
+	free(min_arr);
+	free(InT_arr);
+	free(location_arr);
+}
+///////////////////////////////////////////////////////////////////////                                     
+/////////////////////free arr net - the input /////////////////////////
+void FreeNetArray(EdgeList* net, int n)
+{
+	for (int i = 0; i < n; i++)  // run on all computers
+	{
+		EdgeNode* current = net[i].head; //get the list of curr comp
+		while (current)
+		{
+			EdgeNode* temp = current;
+			current = current->next;
+			free(temp);
+		}
+	}
+	free(net); //free the array
+}
+////////////////////////////////////////////////////////////////////////
+void checkAllocation(void* arr)
+{
+	if (!arr)
+	{
+		exit(1);
+	}
+}
+////////////////////////////////////////////////////////////////////////
