@@ -1,0 +1,205 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+
+////////////////////////////////////////////////////////////////////
+//////////////////////////to part #2////////////////////////////////
+///////////////////////////////////////////////////////////////////
+typedef struct {
+    int computer;
+    int min;
+} Candidate;
+
+typedef struct candidate_node {
+    Candidate c;
+    struct candidate_node* next;
+    struct candidate_node* prev;
+} CandidateNode;
+
+typedef struct {
+    CandidateNode* head;
+    CandidateNode* tail;
+} CandidateList;
+
+/////////////////////////////////////////////////////////////////////
+//////////////////////////for part #3///////////////////////////////
+///////////////////////////////////////////////////////////////////
+typedef struct {
+    int neighbor;
+    int cost;
+} Edge;
+
+typedef struct edge_node {
+    Edge e;
+    struct edge_node* next;
+} EdgeNode;
+
+typedef struct {
+    EdgeNode* head;
+    EdgeNode* tail;
+} EdgeList;
+
+///////////////////////////////////////////////////////////////////////////
+
+EdgeList* build_paths(int* Prim, int n);
+void checkAllocation(void* arr);
+void nullInsertArray(EdgeList* net, int n);
+void updateList(EdgeList* list, int b, int price);
+
+
+void addFirst(EdgeList* list, EdgeNode* node);
+void addLast(EdgeList* list, EdgeNode* node);
+void addMiddle(EdgeNode* prev, EdgeNode* node);
+EdgeNode* BuildNode(int neighbor, int cost);
+
+
+/////////////////////////////////////////////////////////////////////////
+
+EdgeList* build_paths(int* Prim, int n)
+{
+
+    EdgeList* PrimPaths = (EdgeList*)malloc(n * sizeof(EdgeList));
+    checkAllocation(PrimPaths);
+    nullInsertArray(PrimPaths, n); //puts NULL in PrimPaths lists
+
+    for (int v = 0; v < n; v++) //run on all computers
+    {
+        int u = Prim[v]; //the parent
+        if (u != -1)  //if its not root -
+        {
+            //add to PrimPaths
+
+            updateList(&PrimPaths[u], v, 0);
+            updateList(&PrimPaths[v], u, 0);
+        }
+    }
+	free(Prim);
+    return PrimPaths;
+}
+//////////////////////////////////////////////////////////////////////////
+void checkAllocation(void* arr)
+{
+    if (!arr)
+    {
+        exit(1);
+    }
+}
+////////////////////////////////////////////////////////////////////////
+void nullInsertArray(EdgeList* net, int n)
+{
+    for (int i = 0; i < n; i++)
+    {
+        net[i].head = NULL;
+        net[i].tail = NULL;
+    }
+}
+//////////////////////////////////////////////////////////////////////
+void updateList(EdgeList* list, int b, int price)
+{
+
+	//check if the neighbor already exists in the list
+	EdgeNode* curr = list->head;
+	while (curr != NULL)
+	{
+		if (curr->e.neighbor == b) //edge already exists
+		{
+			if (curr->e.cost != price) //if other price, update it
+			{
+				curr->e.cost = price;
+			}
+			return; //exit – don't insert duplicate
+		}
+		curr = curr->next;
+	}
+
+	//if not found – insert it in sorted position
+
+
+	if (list->head == NULL) //empty list
+	{
+		EdgeNode* connectedComp = BuildNode(b, price);
+		list->head = connectedComp;
+		list->tail = connectedComp;
+	}
+	else //list not empty – find correct position
+	{
+
+		if (b < list->head->e.neighbor) // Insert at start
+		{
+			EdgeNode* connectedComp = BuildNode(b, price);
+			addFirst(list, connectedComp);
+		}
+		else if (b > list->tail->e.neighbor) // Insert at end
+		{
+
+			EdgeNode* connectedComp = BuildNode(b, price);
+			addLast(list, connectedComp);
+		}
+		else // Insert in middle
+		{
+			EdgeNode* current = list->head;
+			while (current->next != NULL)
+			{
+				if (b > (current->e.neighbor) && b < (current->next->e.neighbor))
+				{
+					EdgeNode* connectedComp = BuildNode(b, price);
+					addMiddle(current, connectedComp);
+					break;
+				}
+				current = current->next;
+			}
+		}
+	}
+
+}
+/////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+//helper for updatelist - create node
+EdgeNode* BuildNode(int neighbor, int cost)
+{
+
+	EdgeNode* newNode = (EdgeNode*)malloc(sizeof(EdgeNode));
+	checkAllocation(newNode);
+
+	newNode->e.neighbor = neighbor;
+	newNode->e.cost = cost;
+	newNode->next = NULL;
+
+	return newNode;
+}
+/////////////////////////////////////////////////////////////////////////////
+//insert node at beginning of the list
+void addFirst(EdgeList* list, EdgeNode* node)
+{
+	node->next = list->head;
+	list->head = node;
+
+	if (list->tail == NULL) // if list was empty, update tail
+		list->tail = node;
+}
+///////////////////////////////////////////////////////////////////////////
+// insert node at end of the list
+void addLast(EdgeList* list, EdgeNode* node)
+{
+	node->next = NULL;
+
+	if (list->head == NULL) //list is empty
+	{
+		list->head = node;
+		list->tail = node;
+	}
+	else
+	{
+		list->tail->next = node;
+		list->tail = node;
+	}
+}
+////////////////////////////////////////////////////////////////////////
+// insert node after the given previous node
+void addMiddle(EdgeNode* prev, EdgeNode* node)
+{
+	node->next = prev->next;
+	prev->next = node;
+
+}
+///////////////////////////////////////////////////////////////////////////
