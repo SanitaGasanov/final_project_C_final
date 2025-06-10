@@ -1,0 +1,66 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+
+/////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+
+typedef struct {
+	int computer;
+	int min;
+} Candidate;
+
+typedef struct candidate_node {
+	Candidate c;
+	struct candidate_node* next;
+	struct candidate_node* prev;
+} CandidateNode;
+
+typedef struct {
+	CandidateNode* head;
+	CandidateNode* tail;
+} CandidateList;
+
+/////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+typedef struct {
+	int neighbor;
+	int cost;
+} Edge;
+
+typedef struct edge_node {
+	Edge e;
+	struct edge_node* next;
+} EdgeNode;
+
+typedef struct {
+	EdgeNode* head;
+	EdgeNode* tail;
+} EdgeList;
+
+//////////////////////////////////////////////////////////////////////////   all things into function files
+
+
+int* build_prim_tree(EdgeList net[], int n);   // main function to part #2
+EdgeList* build_paths(int* Prim, int n);
+void find_and_print_path(EdgeList* PrimPath, int n, int first, int last);
+
+//////////////////////////////////////////////////////////////////
+int main()
+{
+	int n;
+	EdgeList* Net;
+	int* Prim;
+	EdgeList* PrimPath;
+	int first, last;
+	scanf("%d", &n);
+	Net = build_net(n);
+	Prim = build_prim_tree(Net, n);
+	PrimPath = build_paths(Prim, n);
+	scanf("%d%d", &first, &last);
+	find_and_print_path(PrimPath, n, first, last);
+	return 0;
+}
+/////////////////////////////////////////////////////////////////
