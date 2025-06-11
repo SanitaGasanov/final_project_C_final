@@ -1,0 +1,17 @@
+#include "network.h"
+
+int main()
+{
+	int n;
+	EdgeList* Net;
+	int* Prim;
+	EdgeList* PrimPath;
+	int first, last;
+	scanf("%d", &n);
+	Net = build_net(n);
+	Prim = build_prim_tree(Net, n);
+	PrimPath = build_paths(Prim, n);
+	scanf("%d%d", &first, &last);
+	find_and_print_path(PrimPath, n, first, last);
+	return 0;
+}
