@@ -754,6 +754,7 @@ void FindPath(int first, int last, EdgeList* PrimPath, int* color, int* parent);
 void PrintPath(int v, int first, int* parent);
 void FreeMeomeryFuncD(EdgeList* PrimPath, int n, int* color, int* parent);
 bool validComptoConnect(int first, int last, int n);
+void FreeNetArray(EdgeList* net, int n);
 
 #endif // PART_D_H
 
