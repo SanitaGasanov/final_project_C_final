@@ -1,0 +1,86 @@
+#ifndef NETWORK_H
+#define NETWORK_H
+
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <limits.h>
+
+// === Structs ===
+typedef struct {
+    int neighbor;
+    int cost;
+} Edge;
+
+typedef struct edge_node {
+    Edge e;
+    struct edge_node* next;
+} EdgeNode;
+
+typedef struct {
+    EdgeNode* head;
+    EdgeNode* tail;
+} EdgeList;
+
+typedef struct {
+    int computer;
+    int min;
+} Candidate;
+
+typedef struct candidate_node {
+    Candidate c;
+    struct candidate_node* next;
+    struct candidate_node* prev;
+} CandidateNode;
+
+typedef struct {
+    CandidateNode* head;
+    CandidateNode* tail;
+} CandidateList;
+
+typedef unsigned char BYTE;
+
+// === A ===
+EdgeList* build_net(int n);
+void checkAllocation(void* arr);
+void nullInsertArray(EdgeList* net, int n);
+bool validInput(int* a, int* b, int* price, int n);
+void BuildNetwork(EdgeList* net, int n, int m);
+EdgeNode* BuildNode(int neighbor, int cost);
+void addFirst(EdgeList* list, EdgeNode* node);
+void addLast(EdgeList* list, EdgeNode* node);
+void addMiddle(EdgeNode* prev, EdgeNode* node);
+void updateList(EdgeList* list, int b, int price);
+
+// === B ===
+int* build_prim_tree(EdgeList net[], int n);
+int* CreateMinArr(int num_of_computers);
+int* CreatePrimArr(int num_of_computers);
+BYTE* CreateInTArr(int num_of_computers);
+void SetBitInInTArr(BYTE* bits_arr, int v);
+bool CheckBitInInTArr(BYTE* bits_arr, int v);
+CandidateNode* CreateNode(int computer, int min);
+CandidateList* CreateEmptyList();
+CandidateList* CreatePrioriryList(int num_of_computers);
+CandidateNode** CreateLocationArr(CandidateList* priority_list, int num_of_computers);
+void DecreaseKey(CandidateNode** location_arr, int v, int new_min);
+int DeleteMin(CandidateList* priority);
+int cost(EdgeList Net[], int u, int v);
+void FreeMeomery(CandidateList* priority_list, int* min_arr, BYTE* InT_arr, CandidateNode** location_arr);
+void FreeNetArray(EdgeList* net, int n);
+
+// === C ===
+EdgeList* build_paths(int* Prim, int n);
+
+// === D ===
+void find_and_print_path(EdgeList* PrimPath, int n, int first, int last);
+int* createColorArray(int n);
+int* createParentArray(int n);
+void FindPath(int first, int last, EdgeList* PrimPath, int* color, int* parent);
+void PrintPath(int v, int first, int* parent);
+void FreeMeomeryFuncD(EdgeList* PrimPath, int n, int* color, int* parent);
+bool validComptoConnect(int first, int last, int n);
+
+
+#endif // NETWORK_H
