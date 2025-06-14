@@ -167,7 +167,8 @@ void updateList(EdgeList* list, int b, int price)
 			addLast(list, connectedComp);
 		}
 		else // Insert in middle
-		{
+			{
+		    bool inside = false;
 			EdgeNode* current = list->head;
 			while (current->next != NULL)
 			{
@@ -175,9 +176,16 @@ void updateList(EdgeList* list, int b, int price)
 				{
 					EdgeNode* connectedComp = BuildNode(b, price);
 					addMiddle(current, connectedComp);
+					inside = true;
 					break;
 				}
 				current = current->next;
+			}
+			
+			if(!inside) //if the Node didn't get in, insures to add the node
+			{
+			    EdgeNode* connectedComp = BuildNode(b, price);
+		    	addLast(list, connectedComp);
 			}
 		}
 	}
