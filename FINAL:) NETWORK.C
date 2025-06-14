@@ -8,7 +8,7 @@
 //build - call from Main
 EdgeList* build_net(int n)
 {
-	if (n < 0)
+	if (n <= 0)
 	{
 		printf("Invalid input.");
 		exit(1);
