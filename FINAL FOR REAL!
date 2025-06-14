@@ -658,7 +658,22 @@ void find_and_print_path(EdgeList* PrimPath, int n, int first, int last) // call
 	int* color = createColorArray(n); //create color array
 	int* parent = createParentArray(n); //create parent array
 
+    if (first == last)
+    {
+        printf("%d\n", first);
+        FreeMeomeryFuncD(PrimPath, n, color, parent);
+        return;
+    }
+    
 	FindPath(first, last, PrimPath, color, parent);
+	
+	if (parent[last] == -1 )
+	{
+		printf("No path found.\n");
+		FreeMeomeryFuncD(PrimPath, n, color, parent);
+		return;
+	}
+	
 	PrintPath(last, first, parent);
 	FreeMeomeryFuncD(PrimPath, n, color, parent);
 }
